@@ -59,7 +59,7 @@ class UserViewSet(viewsets.ViewSet):
                 {"error": "Invalid Credentials"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-    # Custom action for user logout
+    # Custom action for user logout - - Not sure we want to handle logging out here, and if we should delete auth tokens
     @action(
         detail=False,
         methods=["post"],
