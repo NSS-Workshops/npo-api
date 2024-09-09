@@ -35,10 +35,10 @@ class UserViewSet(viewsets.ViewSet):
                 password=serializer.validated_data["password"],
             )
             # Make the new user a superuser and staff
-            user.is_superuser = True
-            user.is_staff = True
+            #user.is_superuser = True
+            #user.is_staff = True
             user.save()
-
+            
             token, created = Token.objects.get_or_create(user=user)
             return Response({"token": token.key}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

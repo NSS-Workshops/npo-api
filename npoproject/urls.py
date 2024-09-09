@@ -8,4 +8,7 @@ router.register(r"users", UserViewSet, basename="user")
 
 urlpatterns = [
     path("", include(router.urls)),
+    path('auth/', include('dj_rest_auth.urls')),  # Login, Logout
+    path('auth/registration/', include('dj_rest_auth.registration.urls')),  # Registration
+    path('auth/github/', include('allauth.socialaccount.urls')),  # GitHub OAuth
 ]
