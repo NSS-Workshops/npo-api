@@ -1,0 +1,20 @@
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$320000$skKMaZQjJwGMIJO1MmeaoP$68b2U4VFPL1ZQYgYmM7sIJUWPDhKCrAJOrdz4MWnLq4=",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "ryan@ryantanay.com",
+            "first_name": "Ryan",
+            "last_name": "Tanay",
+            "email": "ryan@ryantanay.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2022-10-21T21:15:55.764Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    }
+]
