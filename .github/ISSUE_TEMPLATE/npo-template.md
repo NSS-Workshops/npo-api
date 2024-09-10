@@ -1,11 +1,4 @@
----
-name: NPO Template
-about: 'Template for pull requests '
-title: ''
-labels: ''
-assignees: drewgoodman1
 
----
 
 ### User Story
 
