@@ -1,2 +1,5 @@
-from .user_view import UserViewSet
-from .github_views import github_login, github_callback
+from django.contrib.auth import login
+from django.contrib.auth import get_user_model
+from ..models import CustomUser  # Import your CustomUser model
+from .user_viewset import UserViewSet
+from .organization_viewset import OrganizationViewSet

@@ -1,9 +1,14 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
+
 
 class Developer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    github_profile = models.URLField()
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,  # Reference the custom user model
+        on_delete=models.CASCADE,
+        related_name="developer_profile",
+    )
+    # Add other fields for the Developer model as needed
 
     def __str__(self):
-        return self.user.username
+        return f"Developer: {self.user.username}"

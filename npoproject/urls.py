@@ -1,25 +1,14 @@
-# npoapi/urls.py
-
-from django.urls import include, path
+from django.contrib import admin
+from django.urls import path, include
 from rest_framework import routers
-from npoapi.views.user_view import UserViewSet
-from npoapi.views.github_views import (
-    github_login,
-    github_callback,
-    user_info,
-    fetch_repos,
-)
+from npoapi.views import UserViewSet, OrganizationViewSet
 
-router = routers.DefaultRouter(trailing_slash=False)  # No trailing slash
-
+router = routers.DefaultRouter()
 router.register(r"users", UserViewSet, basename="user")
+router.register(r"organizations", OrganizationViewSet, basename="organization")
 
 urlpatterns = [
+    path("admin/", admin.site.urls),
     path("", include(router.urls)),
-    path("github/login/", github_login, name="github_login"),  # No trailing slash
-    path(
-        "github/callback", github_callback, name="github_callback"
-    ),  # No trailing slash
-    path("api/user-info", user_info, name="user-info"),  # No trailing slash
-    path("api/fetch-repos", fetch_repos, name="fetch_repos"),
+    # ... other URL patterns ...
 ]
