@@ -5,63 +5,77 @@ from django.contrib.auth import (
 )  # Import get_user_model to dynamically reference the user model
 from .models import Organization
 
-# Use get_user_model() to get the custom user model dynamically
-User = get_user_model()
+# Get the custom user model
+CustomUser = get_user_model()
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    groups = serializers.SlugRelatedField(
-        many=True,
-        slug_field="name",
-        queryset=Group.objects.all(),
-        required=False,
-        allow_null=True,
-        error_messages={
-            "does_not_exist": 'Group "{value}" does not exist.',
-            "invalid": "Invalid group name. Expected a string representing the group name.",
-        },
-    )
+    groups = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(), many=True
+    )  # Expecting a list of group IDs
 
     class Meta:
-        model = User  # Use the dynamically obtained user model
+        model = CustomUser
         fields = [
             "id",
             "username",
             "email",
             "first_name",
             "last_name",
-            "groups",
-            "organization",
             "password",
+            "organization",
+            "groups",  # Include the groups field for assigning roles
         ]
         extra_kwargs = {
-            "password": {"write_only": True},
+            "password": {"write_only": True},  # Ensure password is write-only
         }
 
     def create(self, validated_data):
-        # Handle password hashing
-        password = validated_data.pop("password", None)
-        groups = validated_data.pop("groups", None)
+        """
+        Overriding the create method to handle password hashing and group assignment properly.
+        """
+        groups_data = validated_data.pop(
+            "groups", []
+        )  # Remove groups data from validated_data
+        password = validated_data.pop(
+            "password", None
+        )  # Handle the password separately
 
-        # Create user instance
-        user = User(**validated_data)
+        # Create the user instance
+        user = CustomUser(**validated_data)
+        if password:
+            user.set_password(password)  # Hash the password before saving
+        user.save()  # Save the user instance
+
+        # Assign the groups
+        user.groups.set(groups_data)  # Correct way to assign many-to-many relationships
+        return user
+
+    def update(self, instance, validated_data):
+        """
+        Overriding the update method to handle updating a user instance.
+        """
+        groups_data = validated_data.pop("groups", None)
+        password = validated_data.pop("password", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
         if password:
-            user.set_password(password)  # Hash the password
-        user.save()
+            instance.set_password(password)  # Hash the password before saving
+        instance.save()
 
-        # Add user to groups
-        if groups:
-            # Convert group names to Group instances
-            group_instances = Group.objects.filter(name__in=groups)
-            user.groups.set(group_instances)
+        if groups_data is not None:
+            instance.groups.set(
+                groups_data
+            )  # Correct way to update many-to-many relationships
 
-        return user
+        return instance
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(groups__name="Organization User"),
+        queryset=CustomUser.objects.filter(groups__name="Organization User"),
         required=False,
     )
 

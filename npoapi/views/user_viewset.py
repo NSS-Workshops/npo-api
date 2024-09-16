@@ -6,7 +6,6 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
 from npoapi.serializers import CustomUserSerializer
 
-# Dynamically get the user model
 User = get_user_model()
 
 
@@ -26,36 +25,26 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
-        # Ensure all required data is provided
         serializer = self.get_serializer(data=request.data)
-
-        # Check if the data is valid
         if not serializer.is_valid():
-            print(serializer.errors)  # Debugging line
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Save the user instance
-        user = serializer.save()
+        # Save the user
+        self.perform_create(serializer)
+        user = User.objects.get(username=serializer.data["username"])
 
-        # Set the password for the user
-        user.set_password(request.data["password"])
-        user.save()
+        # Assign the correct group(s) based on the request data
+        if "groups" in request.data:
+            group_ids = request.data["groups"]  # Expecting a list of group IDs
+            user.groups.set(
+                group_ids
+            )  # Correct way to assign many-to-many relationships
 
-        # Add user to groups if groups are provided
-        group_names = request.data.get("groups", [])
-        if group_names:
-            # Fetch the Group instances corresponding to the provided group names
-            groups = Group.objects.filter(name__in=group_names)
-            user.groups.set(groups)  # Set the groups to the user
-            user.save()
-
-        # Create a token for the new user
-        token, created = Token.objects.get_or_create(user=user)
-
-        # Return the serialized data with the token
+        # Log the user in after registration
+        login(request, user)
+        headers = self.get_success_headers(serializer.data)
         return Response(
-            {"user": serializer.data, "token": token.key},
-            status=status.HTTP_201_CREATED,
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
         )
 
     @action(
@@ -80,10 +69,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if user is not None:
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
-            return Response(
-                {"token": token.key},
-                status=status.HTTP_200_OK,
-            )
+            return Response({"token": token.key}, status=status.HTTP_200_OK)
         else:
             return Response(
                 {"error": "Invalid credentials."},

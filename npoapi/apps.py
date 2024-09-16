@@ -1,10 +1,11 @@
-# npoapi/apps.py
+# apps.py
 
 from django.apps import AppConfig
 
 
 class NpoapiConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
     name = "npoapi"
 
     def ready(self):
-        import npoapi.signals  # Register the signals
+        pass  # Remove signal imports if no longer needed
