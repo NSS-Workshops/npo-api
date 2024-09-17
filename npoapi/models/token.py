@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from rest_framework.authtoken.models import Token as DefaultToken
+from django.contrib.auth.models import Group
 
 
 class Token(DefaultToken):

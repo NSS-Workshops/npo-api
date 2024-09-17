@@ -104,7 +104,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "npoapi.CustomUser"  # Use the custom user model
+AUTH_USER_MODEL = "auth.user"  # Use the custom user model
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

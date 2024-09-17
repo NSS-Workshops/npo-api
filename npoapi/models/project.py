@@ -1,5 +1,7 @@
 from django.db import models
 from .organization import Organization
+from django.contrib.auth.models import Group
+
 
 class Project(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)

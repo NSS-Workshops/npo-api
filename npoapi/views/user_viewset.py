@@ -4,14 +4,18 @@ from rest_framework.response import Response
 from django.contrib.auth import authenticate, login, get_user_model
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Group
-from npoapi.serializers import CustomUserSerializer
+from npoapi.serializers import (
+    UserSerializer,
+)  # Ensure this serializer includes the organization field
 
 User = get_user_model()
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = CustomUserSerializer
+    serializer_class = (
+        UserSerializer  # Ensure your UserSerializer includes 'organization'
+    )
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
@@ -25,20 +29,32 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
+        """
+        Endpoint to create a new user.
+        URL: /users/
+        Method: POST
+        Request Body:
+        {
+            "username": "newuser",
+            "email": "user@example.com",
+            "password": "securepassword",
+            "first_name": "First",
+            "last_name": "Last",
+            "organization": 1,  // Assuming you have an Organization with ID 1
+            "groups": [2]  // Optional: IDs of the groups to assign
+        }
+        """
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Save the user
-        self.perform_create(serializer)
-        user = User.objects.get(username=serializer.data["username"])
+        user = serializer.save()
 
-        # Assign the correct group(s) based on the request data
+        # Assign groups if provided
         if "groups" in request.data:
-            group_ids = request.data["groups"]  # Expecting a list of group IDs
-            user.groups.set(
-                group_ids
-            )  # Correct way to assign many-to-many relationships
+            group_ids = request.data["groups"]
+            user.groups.set(group_ids)
 
         # Log the user in after registration
         login(request, user)
@@ -54,6 +70,20 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=[permissions.AllowAny],
     )
     def user_login(self, request):
+        """
+        Endpoint to log in a user and return an authentication token.
+        URL: /users/login/
+        Method: POST
+        Request Body:
+        {
+            "username": "your_username",
+            "password": "your_password"
+        }
+        Response:
+        {
+            "token": "some_generated_token"
+        }
+        """
         username = request.data.get("username")
         password = request.data.get("password")
 

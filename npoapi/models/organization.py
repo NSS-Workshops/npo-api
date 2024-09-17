@@ -1,5 +1,6 @@
 from django.db import models
-from .custom_user import CustomUser  # Import the CustomUser model
+from django.conf import settings  # Import settings to reference the user model
+from django.contrib.auth.models import Group
 
 
 class Organization(models.Model):
@@ -9,9 +10,9 @@ class Organization(models.Model):
     city = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
 
-    # Use ForeignKey if multiple users can belong to one organization
+    # Use ForeignKey to reference the default user model
     user = models.ForeignKey(
-        CustomUser,
+        settings.AUTH_USER_MODEL,  # Use the default user model
         on_delete=models.CASCADE,
         related_name="organizations",
         null=True,

@@ -61,6 +61,11 @@ def github_callback(request):
         include_client_id=True,
     )
 
+    if "error" in token_response:
+        return HttpResponse(
+            f"Error fetching token: {token_response['error']}", status=400
+        )
+
     print("Token response:", token_response)
 
     # Fetch user info
