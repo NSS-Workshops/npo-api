@@ -1,76 +1,82 @@
-from rest_framework.viewsets import ModelViewSet  # Import ModelViewSet correctly
-from rest_framework import status
+# views/organization_viewset.py
+from rest_framework import viewsets, status
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.response import Response
-from ..models import Organization  # Correct relative import for the Organization model
-from ..serializers import (
-    OrganizationSerializer,
-)  # Correct relative import for the serializer
+from npoapi.models import Organization
+from npoapi.serializers import OrganizationSerializer
 
 
-class OrganizationViewSet(ModelViewSet):
+class OrganizationViewSet(viewsets.ModelViewSet):
     """
-    A simple ViewSet for creating and managing Organizations.
+    A viewset for viewing, creating, updating, and deleting organizations.
+    Permissions are managed based on Django's built-in group and permission system.
     """
 
-    def create(self, request):
-        """Handle POST operations for creating an organization"""
-        serializer = OrganizationSerializer(data=request.data)
+    queryset = Organization.objects.all()
+    serializer_class = OrganizationSerializer
+    permission_classes = [DjangoModelPermissions]  # Use Django's built-in permissions
 
-        if serializer.is_valid():  # Validate the incoming data
-            serializer.save()  # Save the new organization instance
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED
-            )  # Respond with the created data and HTTP 201
+    def get_permissions(self):
+        """
+        This method assigns permissions based on the action being performed.
+        DjangoModelPermissions will check the user's group-based permissions.
+        """
+        # Assign different permission classes based on the action
+        if self.action in ["list", "retrieve"]:
+            # Allow any authenticated user to view organizations
+            permission_classes = [DjangoModelPermissions]
+        elif self.action in ["create", "update", "partial_update", "destroy"]:
+            # Only allow users with specific permissions to create, update, or delete organizations
+            permission_classes = [DjangoModelPermissions]
+        else:
+            permission_classes = [DjangoModelPermissions]
+        return [permission() for permission in permission_classes]
 
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )  # Respond with validation errors and HTTP 400
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new organization if the user has the necessary permissions.
+        """
+        # Check if the user has permission to create an organization
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def list(self, request):
-        """Handle GET requests for listing all organizations"""
-        organizations = Organization.objects.all()
-        serializer = OrganizationSerializer(organizations, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def retrieve(self, request, pk=None):
-        """Handle GET requests for retrieving a single organization"""
-        try:
-            organization = Organization.objects.get(pk=pk)
-        except Organization.DoesNotExist:
-            return Response(
-                {"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+    def update(self, request, *args, **kwargs):
+        """
+        Update an existing organization if the user has the necessary permissions.
+        """
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = OrganizationSerializer(organization)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.save()
+        return Response(serializer.data)
 
-    def update(self, request, pk=None):
-        """Handle PUT requests for updating an organization"""
-        try:
-            organization = Organization.objects.get(pk=pk)
-        except Organization.DoesNotExist:
-            return Response(
-                {"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+    def destroy(self, request, *args, **kwargs):
+        """
+        Delete an organization if the user has the necessary permissions.
+        """
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        serializer = OrganizationSerializer(organization, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    def list(self, request, *args, **kwargs):
+        """
+        List all organizations if the user has the necessary permissions.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, pk=None):
-        """Handle DELETE requests for deleting an organization"""
-        try:
-            organization = Organization.objects.get(pk=pk)
-        except Organization.DoesNotExist:
-            return Response(
-                {"error": "Organization not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        organization.delete()
-        return Response(
-            {"message": "Organization deleted successfully"},
-            status=status.HTTP_204_NO_CONTENT,
-        )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a single organization if the user has the necessary permissions.
+        """
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
