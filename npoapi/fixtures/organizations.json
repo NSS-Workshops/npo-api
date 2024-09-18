@@ -1,0 +1,14 @@
+[
+  {
+    "model": "npoapi.organization",
+    "pk": 1,
+    "fields": {
+      "name": "Example Org",
+      "website": "https://example.org",
+      "address": "123 Main St, Anytown, USA",
+      "city": "Anytown",
+      "state": "State",
+      "user": 11
+    }
+  }
+]

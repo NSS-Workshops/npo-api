@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-from dotenv import load_dotenv  # Import the dotenv function
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -8,23 +8,18 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
     "SECRET_KEY", "django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb"
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+APPEND_SLASH = False
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -32,10 +27,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Remove allauth apps
+    "npoapi",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
-    "npoapi",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",  # Default authentication backend
 ]
 
 REST_FRAMEWORK = {
@@ -66,6 +66,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",  # Additional variations if needed
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:8000",  # If you're using this for testing with Postman
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -95,10 +96,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "npoproject.wsgi.application"
 
-
 # Database
-# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -106,10 +104,9 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = "auth.user"  # Use the custom user model
 
 # Password validation
-# https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -125,22 +122,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/4.0/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.0/howto/static-files/
-
 STATIC_URL = "static/"
 
 # GitHub OAuth credentials loaded from the .env file
@@ -148,9 +136,7 @@ GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "Ov23liX9qowoyyanQJnw")
 GITHUB_CLIENT_SECRET = os.getenv(
     "GITHUB_CLIENT_SECRET", "262514825d1995a44c00d3aadeeb3a5f7d6c5bc4"
 )
-GITHUB_REDIRECT_URI = "http://localhost:8000/github/callback"  # Must match the callback URL registered in GitHub OAuth App
+GITHUB_REDIRECT_URI = "http://localhost:8000/github/callback/"  # Must match the callback URL registered in GitHub OAuth App
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
