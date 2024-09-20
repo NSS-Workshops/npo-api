@@ -1,3 +1,4 @@
+from datetime import timedelta
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -74,7 +75,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def user_login(self, request):
         """
-        Endpoint to log in a user and return an authentication token.
+        Endpoint to log in a user and return/set an authentication token in cookies.
         URL: /users/login/
         Method: POST
         Request Body:
@@ -84,7 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
         }
         Response:
         {
-            "token": "some_generated_token"
+            "message": "Logged in successfully."
         }
         """
         username = request.data.get("username")
@@ -102,27 +103,55 @@ class UserViewSet(viewsets.ModelViewSet):
         if user is not None:
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=status.HTTP_200_OK)
+
+            # Set the token in an HTTP-only cookie
+            response = Response(
+                {"message": "Logged in successfully."}, status=status.HTTP_200_OK
+            )
+            response.set_cookie(
+                "auth_token",
+                token.key,
+                max_age=timedelta(days=30),  # Cookie expiration time
+                httponly=True,  # Prevent JavaScript access
+                secure=False,  # Set to True for production with HTTPS
+            )
+            return response
         else:
             return Response(
                 {"error": "Invalid credentials."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    def retrieve(self, request, pk=None):
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="logout",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def user_logout(self, request):
         """
-        Endpoint to retrieve a specific user.
-        URL: /users/<id>/
-        Method: GET
+        Log out the user and remove the auth token cookie.
         """
-        try:
-            user = User.objects.get(pk=pk)
-            serializer = self.get_serializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except User.DoesNotExist:
-            return Response(
-                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+        response = Response(
+            {"message": "Logged out successfully."}, status=status.HTTP_200_OK
+        )
+        response.delete_cookie("auth_token")
+        return response
+
+        def retrieve(self, request, pk=None):
+            """
+            Endpoint to retrieve a specific user.
+            URL: /users/<id>/
+            Method: GET
+            """
+            try:
+                user = User.objects.get(pk=pk)
+                serializer = self.get_serializer(user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
+                )
 
     def update(self, request, *args, **kwargs):
         """
@@ -131,36 +160,14 @@ class UserViewSet(viewsets.ModelViewSet):
         Method: PUT
         """
         partial = kwargs.pop("partial", False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        instance = self.get_object()  # Get the user instance
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial
+        )  # Use correct method to get serializer
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        self.perform_update(serializer)
+        self.perform_update(serializer)  # Perform the update
+
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Endpoint to partially update a specific user.
-        URL: /users/<id>/
-        Method: PATCH
-        """
-        return self.update(request, *args, **kwargs, partial=True)
-
-    def destroy(self, request, pk=None):
-        """
-        Endpoint to delete a specific user.
-        URL: /users/<id>/
-        Method: DELETE
-        """
-        try:
-            user = User.objects.get(pk=pk)
-            user.delete()
-            return Response(
-                {"success": "User deleted successfully."},
-                status=status.HTTP_204_NO_CONTENT,
-            )
-        except User.DoesNotExist:
-            return Response(
-                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
-            )
