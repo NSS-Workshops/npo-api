@@ -4,50 +4,37 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.contrib.auth import login as auth_login, get_user_model
 from requests_oauthlib import OAuth2Session
+from datetime import timedelta
 
 User = get_user_model()
 
 
 def github_login(request):
     """Redirects to GitHub for authentication."""
-    print("GitHub login requested")
-
-    # GitHub OAuth setup
     oauth = OAuth2Session(
         settings.GITHUB_CLIENT_ID,
         redirect_uri=settings.GITHUB_REDIRECT_URI,
-        scope=["user:email"],
+        scope=["repo", "user"],
     )
     authorization_url, state = oauth.authorization_url(
         "https://github.com/login/oauth/authorize"
     )
-
-    print("Authorization URL:", authorization_url)
-    print("State:", state)
-
     request.session["oauth_state"] = state
     return redirect(authorization_url)
 
 
 def github_callback(request):
     """Handles the GitHub callback and logs in the user."""
-    print("GitHub callback received")
-
     state = request.GET.get("state")
     code = request.GET.get("code")
-    print("Callback code:", code)
-    print("Callback state:", state)
 
     if not state or not code:
         return HttpResponse("Missing state or code", status=400)
 
-    # Check if state matches
     session_state = request.session.get("oauth_state")
     if state != session_state:
-        print("State mismatch")
         return HttpResponse("Invalid state", status=400)
 
-    # GitHub OAuth setup
     oauth = OAuth2Session(
         settings.GITHUB_CLIENT_ID,
         redirect_uri=settings.GITHUB_REDIRECT_URI,
@@ -61,19 +48,12 @@ def github_callback(request):
         include_client_id=True,
     )
 
-    if "error" in token_response:
-        return HttpResponse(
-            f"Error fetching token: {token_response['error']}", status=400
-        )
-
-    print("Token response:", token_response)
+    print("Token Response:", token_response)  # <-- Debugging: Print the token
 
     # Fetch user info
     user_info_url = "https://api.github.com/user"
     oauth = OAuth2Session(settings.GITHUB_CLIENT_ID, token=token_response)
     user_info = oauth.get(user_info_url).json()
-
-    print("User info:", user_info)
 
     # Find or create the user
     user, created = User.objects.get_or_create(
@@ -81,17 +61,44 @@ def github_callback(request):
         defaults={
             "email": user_info.get("email", ""),
             "first_name": user_info.get("name", ""),
-            # Add additional fields if needed
         },
     )
-
-    if created:
-        print("User created:", user.username)
-    else:
-        print("User found:", user.username)
 
     # Log the user in
     auth_login(request, user)
 
-    # Redirect to the home page or another page after successful login
-    return redirect(reverse("home"))  # Adjust the URL name as needed
+    response = redirect(reverse("home"))  # Adjust the URL name as needed
+    response.set_cookie(
+        "oauth_token",
+        token_response["access_token"],
+        max_age=timedelta(days=30),  # Cookie expiration time
+        httponly=True,  # Prevent access via JavaScript
+        secure=False,  # Use True for HTTPS, False for local development (adjust as necessary)
+    )
+    print("OAuth token set in cookie:", response.cookies.get("oauth_token"))
+
+    return response  # Ensure this is inside the function
+
+
+"""
+from requests_oauthlib import OAuth2Session
+
+def some_view(request):
+    # Retrieve the OAuth token from the cookie
+    oauth_token = request.COOKIES.get('oauth_token')
+
+    if not oauth_token:
+        return HttpResponse("OAuth token not found", status=403)
+
+    # Use the token to make API calls to GitHub
+    oauth = OAuth2Session(settings.GITHUB_CLIENT_ID, token={'access_token': oauth_token})
+    user_repos_url = "https://api.github.com/user/repos"
+    response = oauth.get(user_repos_url)
+
+    if response.status_code != 200:
+        return HttpResponse(f"GitHub API call failed: {response.text}", status=response.status_code)
+
+    # Do something with the API response
+    user_repos = response.json()
+    return HttpResponse(user_repos)
+    """
