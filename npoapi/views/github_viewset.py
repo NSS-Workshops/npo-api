@@ -78,27 +78,3 @@ def github_callback(request):
     print("OAuth token set in cookie:", response.cookies.get("oauth_token"))
 
     return response  # Ensure this is inside the function
-
-
-"""
-from requests_oauthlib import OAuth2Session
-
-def some_view(request):
-    # Retrieve the OAuth token from the cookie
-    oauth_token = request.COOKIES.get('oauth_token')
-
-    if not oauth_token:
-        return HttpResponse("OAuth token not found", status=403)
-
-    # Use the token to make API calls to GitHub
-    oauth = OAuth2Session(settings.GITHUB_CLIENT_ID, token={'access_token': oauth_token})
-    user_repos_url = "https://api.github.com/user/repos"
-    response = oauth.get(user_repos_url)
-
-    if response.status_code != 200:
-        return HttpResponse(f"GitHub API call failed: {response.text}", status=response.status_code)
-
-    # Do something with the API response
-    user_repos = response.json()
-    return HttpResponse(user_repos)
-    """

@@ -1,19 +1,22 @@
 from pathlib import Path
-import os
-from dotenv import load_dotenv
+import environ
 
-# Load environment variables from .env file
-load_dotenv()
+# Initialize environment variables
+env = environ.Env(DEBUG=(bool, False))  # Set casting and default values
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Read .env file in the project root
+environ.Env.read_env()  # This will load your .env file
+
+# Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv(
-    "SECRET_KEY", "django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb"
+SECRET_KEY = env(
+    "SECRET_KEY",
+    default="django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb",
 )
 
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=True)
 
 APPEND_SLASH = False
 
@@ -27,13 +30,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Remove allauth apps
     "npoapi",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
     "django_extensions",
 ]
+
+# GitHub App configuration
+GITHUB_APP_ID = env.int("GITHUB_APP_ID", default=1005976)  # Converts to int
+GITHUB_INSTALLATION_ID = env.int("GITHUB_INSTALLATION_ID", default=55276178)
+GITHUB_PRIVATE_KEY = env("GITHUB_PRIVATE_KEY", default="NOT_SET").replace("\\n", "\n")
+print(f"GITHUB_PRIVATE_KEY: {GITHUB_PRIVATE_KEY}")
+
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # Default authentication backend
@@ -134,9 +143,9 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # GitHub OAuth credentials loaded from the .env file
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID", "Ov23liX9qowoyyanQJnw")
-GITHUB_CLIENT_SECRET = os.getenv(
-    "GITHUB_CLIENT_SECRET", "262514825d1995a44c00d3aadeeb3a5f7d6c5bc4"
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID", default="Ov23liX9qowoyyanQJnw")
+GITHUB_CLIENT_SECRET = env(
+    "GITHUB_CLIENT_SECRET", default="262514825d1995a44c00d3aadeeb3a5f7d6c5bc4"
 )
 GITHUB_REDIRECT_URI = "http://localhost:8000/github/callback/"  # Must match the callback URL registered in GitHub OAuth App
 
