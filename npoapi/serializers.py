@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 from .models import Organization, Project  # Import the Organization and Project models
-from .utils.github_service import (
+from .services.github_service import (
     GitHubService,
 )  # Import a utility for GitHub repo creation
 
