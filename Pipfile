@@ -12,6 +12,9 @@ django-cors-headers = "*"
 pylint-django = "*"
 requests = "*"
 django-extensions = "*"
+PyJWT = "*"
+django-environ = "*"
+requests-oauthlib = "*"
 
 [dev-packages]
 

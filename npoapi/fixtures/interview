@@ -1,0 +1,106 @@
+import java.io.*;
+import java.util.*;
+
+// Define the interface for Bank Account Operations
+interface IBankAccountOperation {
+    void deposit(double d);
+    void withdraw(double d);
+    double processOperation(String message);
+}
+
+// BankOperations class implementing the IBankAccountOperation interface
+class BankOperations implements IBankAccountOperation {
+    private double balance = 0.0; // Balance is private (Encapsulation)
+
+    // Implement deposit method
+    @Override
+    public void deposit(double d) {
+        if (d > 0) {
+            balance += d; // Add amount to balance if valid
+        }
+    }
+
+    // Implement withdraw method
+    @Override
+    public void withdraw(double d) {
+        if (d > 0 && balance >= d) {
+            balance -= d; // Subtract amount from balance if valid
+        }
+    }
+
+    // Process the operation by analyzing the input message
+    @Override
+    public double processOperation(String message) {
+        // Convert message into lowercase and split it into words
+        String[] words = message.toLowerCase(Locale.ROOT).split(" ");
+
+        // Detect deposit-related operations (deposit, put, invest, transfer)
+        if (message.toLowerCase().contains("deposit") || message.toLowerCase().contains("put") || 
+            message.toLowerCase().contains("invest") || message.toLowerCase().contains("transfer")) {
+            // Extract the first number (amount) from the message
+            for (String word : words) {
+                try {
+                    double amount = Double.parseDouble(word); // Try to parse number
+                    deposit(amount);  // Perform deposit
+                    break; // Break after finding the amount
+                } catch (NumberFormatException e) {
+                    // Not a number, continue to the next word
+                }
+            }
+        }
+        // Detect withdrawal-related operations (withdraw, pull)
+        else if (message.toLowerCase().contains("withdraw") || message.toLowerCase().contains("pull")) {
+            // Extract the first number (amount) from the message
+            for (String word : words) {
+                try {
+                    double amount = Double.parseDouble(word); // Try to parse number
+                    withdraw(amount);  // Perform withdrawal
+                    break; // Break after finding the amount
+                } catch (NumberFormatException e) {
+                    // Not a number, continue to the next word
+                }
+            }
+        }
+        // Detect balance inquiry operations (see, show)
+        else if (message.toLowerCase().contains("see") || message.toLowerCase().contains("show")) {
+            // Do nothing but return the current balance
+        }
+
+        // Return the current balance after the operation
+        return balance;
+    }
+}
+
+// Main class that runs the solution (as required by HackerRank or similar environments)
+class Solution {
+    public static void main(String[] args) throws IOException {
+        // Reader and writer for input/output handling
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        PrintWriter pw = new PrintWriter(System.out);
+
+        // Read the number of input lines
+        int n = Integer.parseInt(br.readLine());
+        List<String> inputs = new ArrayList<>();
+        
+        // Read input messages
+        for (int i = 0; i < n; i++) {
+            inputs.add(br.readLine());
+        }
+
+        // Create a new BankOperations object to handle operations
+        BankOperations opt = new BankOperations();
+        IBankAccountOperation account = new BankOperations(); // Interface reference to class object
+            account.deposit(1000.0);   // Calls the deposit() method implemented in BankOperations
+            account.withdraw(500.0);   // Calls the withdraw() method implemented in BankOperations
+            double balance = account.processOperation("deposit 200"); // Calls processOperation
+        
+        // Process each input and output the balance after each operation
+        for (String item : inputs) {
+            pw.println((int) opt.processOperation(item)); // Cast balance to integer for output
+        }
+
+        // Flush and close output writer
+        pw.flush();
+        pw.close();
+    }
+}
