@@ -1,9 +1,10 @@
 # views/organization_viewset.py
 from rest_framework import viewsets, status
-from rest_framework.permissions import DjangoModelPermissions
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
 from npoapi.models import Organization
 from npoapi.serializers import OrganizationSerializer
+from rest_framework.decorators import action
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -31,6 +32,29 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [DjangoModelPermissions]
         return [permission() for permission in permission_classes]
+
+    # Custom action to retrieve the organization associated with the logged-in user
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="user",
+        permission_classes=[IsAuthenticated],
+    )
+    def get_user_organization(self, request):
+        """
+        Retrieves the organization associated with the logged-in user.
+        """
+        user = request.user
+        try:
+            # Assuming the organization is associated with the user via a ForeignKey
+            organization = Organization.objects.get(user=user)
+            serializer = OrganizationSerializer(organization)
+            return Response(serializer.data)
+        except Organization.DoesNotExist:
+            return Response(
+                {"detail": "No organization found for the user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
     def create(self, request, *args, **kwargs):
         """

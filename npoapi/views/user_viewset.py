@@ -60,8 +60,10 @@ class UserViewSet(viewsets.ModelViewSet):
             group_ids = request.data["groups"]
             user.groups.set(group_ids)
 
-        # Log the user in after registration
+        # Automatically log in the user after registration
         login(request, user)
+
+        # Return the created user's information
         headers = self.get_success_headers(serializer.data)
         return Response(
             serializer.data, status=status.HTTP_201_CREATED, headers=headers
@@ -75,7 +77,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def user_login(self, request):
         """
-        Endpoint to log in a user and return/set an authentication token in cookies.
+        Endpoint to log in a user and return user info along with an authentication token in cookies.
         URL: /users/login/
         Method: POST
         Request Body:
@@ -85,7 +87,15 @@ class UserViewSet(viewsets.ModelViewSet):
         }
         Response:
         {
-            "message": "Logged in successfully."
+            "message": "Logged in successfully.",
+            "user": {
+                "username": "johndoe",
+                "email": "johndoe@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "group": "Developer"  # Assuming group is represented like this
+            },
+            "auth_token": "your_auth_token"
         }
         """
         username = request.data.get("username")
@@ -104,9 +114,17 @@ class UserViewSet(viewsets.ModelViewSet):
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
 
+            # Serialize the user data
+            user_data = UserSerializer(user).data
+
             # Set the token in an HTTP-only cookie
             response = Response(
-                {"message": "Logged in successfully."}, status=status.HTTP_200_OK
+                {
+                    "message": "Logged in successfully.",
+                    "user": user_data,  # Send user data in the response
+                    "auth_token": token.key,  # Also include token for client-side storage if necessary
+                },
+                status=status.HTTP_200_OK,
             )
             response.set_cookie(
                 "auth_token",
@@ -138,20 +156,21 @@ class UserViewSet(viewsets.ModelViewSet):
         response.delete_cookie("auth_token")
         return response
 
-        def retrieve(self, request, pk=None):
-            """
-            Endpoint to retrieve a specific user.
-            URL: /users/<id>/
-            Method: GET
-            """
-            try:
-                user = User.objects.get(pk=pk)
-                serializer = self.get_serializer(user)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except User.DoesNotExist:
-                return Response(
-                    {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
-                )
+    # Fix indentation here for retrieve method
+    def retrieve(self, request, pk=None):
+        """
+        Endpoint to retrieve a specific user.
+        URL: /users/<id>/
+        Method: GET
+        """
+        try:
+            user = User.objects.get(pk=pk)
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
     def update(self, request, *args, **kwargs):
         """
