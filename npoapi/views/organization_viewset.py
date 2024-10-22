@@ -2,8 +2,8 @@
 from rest_framework import viewsets, status
 from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from rest_framework.response import Response
-from npoapi.models import Organization
-from npoapi.serializers import OrganizationSerializer
+from npoapi.models import Organization, Project
+from npoapi.serializers import OrganizationSerializer, ProjectSerializer
 from rest_framework.decorators import action
 
 

@@ -15,5 +15,5 @@ urlpatterns = [
     path("", include(router.urls)),
     path("github/login/", github_login, name="github_login"),
     path("github/callback/", github_callback, name="github_callback"),
-    path("home/", home, name="home"),  # Add this line
+    path("home/", home, name="home"),
 ]
