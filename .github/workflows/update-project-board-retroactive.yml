@@ -1,0 +1,32 @@
+name: Retroactive Project Board Update
+
+on:
+  workflow_dispatch:  # This allows the workflow to be triggered manually
+
+jobs:
+  update_project_board:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move project card for closed PR
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const projectId = YOUR_PROJECT_ID;  // Add your project board ID here
+            const prNumber = YOUR_PR_NUMBER;  // Add the closed PR number you want to update
+
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const projectCardId = issue.data.project_card_id;
+
+            if (projectCardId) {
+              await github.rest.projects.moveCard({
+                card_id: projectCardId,
+                position: 'top',
+                column_id: YOUR_COLUMN_ID_FOR_DONE,  // Specify the 'Done' column ID
+              });
+            }
