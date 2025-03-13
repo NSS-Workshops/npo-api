@@ -1,25 +1,23 @@
+import os
 from pathlib import Path
 import environ
 
-# Initialize environment variables
-env = environ.Env(DEBUG=(bool, False))  # Set casting and default values
-
-# Read .env file in the project root
-environ.Env.read_env()  # This will load your .env file
-
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environment variables
+env = environ.Env(DEBUG=(bool, False))
+# Explicitly load .env from the project root
+env_file = os.path.join(BASE_DIR, ".env")
+environ.Env.read_env(env_file=env_file)
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = env(
     "SECRET_KEY",
     default="django-insecure-x9yg09-pv69(#mz@!n(1&c_rxvks#3*v&#vx!%t39p(n(f0gbb",
 )
-
 DEBUG = env.bool("DEBUG", default=True)
-
 APPEND_SLASH = False
-
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -43,7 +41,6 @@ GITHUB_INSTALLATION_ID = env.int("GITHUB_INSTALLATION_ID", default=55276178)
 GITHUB_PRIVATE_KEY = env("GITHUB_PRIVATE_KEY", default="NOT_SET").replace("\\n", "\n")
 # print(f"GITHUB_PRIVATE_KEY: {GITHUB_PRIVATE_KEY}")
 
-
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # Default authentication backend
 ]
@@ -51,7 +48,7 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        # "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -71,24 +68,21 @@ MIDDLEWARE = [
 
 # CORS configuration
 CORS_ALLOW_CREDENTIALS = True  # Allow credentials to be included in requests
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Your Next.js frontend URL
     "http://127.0.0.1:3000",  # Additional variations if needed
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://localhost:8000",  # If you're using this for testing with Postman
+    "http://localhost:8000",  # For testing with Postman
 ]
-
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",  # Your Next.js frontend URL
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
 
 ROOT_URLCONF = "npoproject.urls"
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -104,7 +98,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = "npoproject.wsgi.application"
 
 # Database
@@ -120,17 +113,11 @@ AUTH_USER_MODEL = "auth.user"  # Use the custom user model
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
     },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # Internationalization

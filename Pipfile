@@ -15,6 +15,7 @@ django-extensions = "*"
 PyJWT = "*"
 django-environ = "*"
 requests-oauthlib = "*"
+environ = "*"
 
 [dev-packages]
 
